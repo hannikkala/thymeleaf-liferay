@@ -31,6 +31,9 @@ import com.liferay.portal.model.Layout;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.PortletURLFactoryUtil;
 
+import static com.liferay.portal.kernel.portlet.LiferayPortletMode.*;
+import static com.liferay.portal.kernel.portlet.LiferayWindowState.*;
+
 /**
  * Util class to create Liferay portlet URLs.
  * 
@@ -39,6 +42,13 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 public class LiferayURLUtil {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
+
+    protected static final PortletMode[] PORTLET_MODES = {
+        VIEW, EDIT, HELP, ABOUT, CONFIG, EDIT_DEFAULTS, EDIT_GUEST, PREVIEW, PRINT
+    };
+    protected static final WindowState[] WINDOW_STATES = {
+        NORMAL, MAXIMIZED, MINIMIZED, EXCLUSIVE, POP_UP
+    };
 	
 	private String prefix;
 	
@@ -67,12 +77,19 @@ public class LiferayURLUtil {
 			portletURL.setPortletMode(getPortletMode((String) params.get("portletMode")));
 		} catch (PortletModeException e) {
 		}
+
+        if (params.containsKey("action")) {
+            String value = params.get("action") != null ? params.get("action").toString() : "";
+            portletURL.setParameter("javax.portlet.action", value, false);
+            portletURL.setLifecycle(PortletRequest.ACTION_PHASE);
+        }
 		
 		params.remove("plid");
 		params.remove("portletname");
 		params.remove("lifecycle");
 		params.remove("windowState");
 		params.remove("portletMode");
+		params.remove("action");
 		
 		addParameters(params, portletURL);
 		
@@ -80,28 +97,28 @@ public class LiferayURLUtil {
 	}
 	
 	protected WindowState getWindowState(String windowState) {
-		if(windowState == null) {
-			return WindowState.NORMAL;
-		}
-		if(windowState.equalsIgnoreCase(WindowState.MAXIMIZED.toString())) {
-			return WindowState.MAXIMIZED;
-		} else if(windowState.equalsIgnoreCase(WindowState.MINIMIZED.toString())) {
-			return WindowState.MAXIMIZED;
-		}
+        if (windowState != null) {
+            windowState = windowState.toLowerCase();
+
+            for (WindowState state : WINDOW_STATES) {
+                if (windowState.equals(state.toString())) {
+                    return state;
+                }
+            }
+        }
 		return WindowState.NORMAL;
 	}
 
 	protected PortletMode getPortletMode(String portletMode) {
-		if(portletMode == null) {
-			return PortletMode.VIEW;
-		}
-		
-		if(portletMode.equalsIgnoreCase(PortletMode.EDIT.toString())) {
-			return PortletMode.EDIT;
-		} else if(portletMode.equalsIgnoreCase(PortletMode.HELP.toString())) {
-			return PortletMode.HELP;
-		}
-		
+        if (portletMode != null) {
+            portletMode = portletMode.toLowerCase();
+
+            for (PortletMode mode : PORTLET_MODES) {
+                if (portletMode.equals(mode.toString())) {
+                    return mode;
+                }
+            }
+        }
 		return PortletMode.VIEW;
 	}
 	
